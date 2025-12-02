@@ -212,33 +212,6 @@ Sessions are stored as JSON files containing the complete conversation history a
 
 ## Development
 
-### Project Structure
-
-```
-agent-t/
-├── src/
-│   ├── main.rs              # CLI entry point
-│   ├── agent_loop.rs        # Main agentic loop
-│   ├── tools/               # All tool implementations
-│   │   ├── mod.rs           # Tool registry
-│   │   ├── read_file.rs
-│   │   ├── write_file.rs
-│   │   ├── edit_file.rs
-│   │   ├── bash.rs
-│   │   ├── ra_*.rs          # rust-analyzer tools
-│   │   └── ...
-│   ├── inspector.rs         # Traffic monitoring web UI
-│   ├── session.rs           # Session persistence
-│   ├── terminal.rs          # Terminal UI utilities
-│   ├── rust_analyzer.rs     # LSP client
-│   ├── process_manager.rs   # Process lifecycle
-│   └── ...
-├── prompts/
-│   └── system.txt           # Default system prompt
-├── Cargo.toml
-└── CLAUDE.md                # Project documentation for Claude
-```
-
 ### Adding New Tools
 
 1. Create a new file in `src/tools/`
@@ -266,28 +239,6 @@ cargo clippy
 ```
 
 ## Examples
-
-### Example Session
-
-```
-You: Create a new Rust project structure for a web API
-
-Agent: I'll create a basic Rust web API project structure using Axum.
-[Agent uses write_file tool multiple times to create main.rs, Cargo.toml, etc.]
-
-You: Add error handling middleware
-
-Agent: I'll add a custom error handling layer...
-[Agent uses edit_file to modify the code]
-
-You: Show me what files we've changed
-
-Agent: [Agent lists all modified files]
-
-You: Run cargo check and fix any issues
-
-Agent: [Agent uses bash tool to run cargo check, then fixes any errors found]
-```
 
 ### Advanced Usage Example
 
@@ -324,10 +275,6 @@ This command:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
-
-## License
-
-[Add your license here]
 
 ## Acknowledgments
 
