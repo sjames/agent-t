@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent-t Traffic Inspector</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-card: #0f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --accent-request: #e94560;
+            --accent-response: #00d9ff;
+            --accent-tool: #00ff88;
+            --accent-system: #ffd700;
+            --border-color: #2a2a4a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff4444;
+        }
+
+        .status-dot.connected {
+            background: #44ff44;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        button {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--border-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .filter-btn.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .filter-btn[data-filter="request"] { border-color: var(--accent-request); }
+        .filter-btn[data-filter="response"] { border-color: var(--accent-response); }
+        .filter-btn[data-filter="tool"] { border-color: var(--accent-tool); }
+        .filter-btn[data-filter="system"] { border-color: var(--accent-system); }
+
+        .filter-btn.active[data-filter="request"] { background: var(--accent-request); }
+        .filter-btn.active[data-filter="response"] { background: var(--accent-response); }
+        .filter-btn.active[data-filter="tool"] { background: var(--accent-tool); }
+        .filter-btn.active[data-filter="system"] { background: var(--accent-system); }
+
+        main {
+            padding: 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .message-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-left: 4px solid transparent;
+        }
+
+        .message.request .message-header { border-left-color: var(--accent-request); }
+        .message.response .message-header { border-left-color: var(--accent-response); }
+        .message.tool .message-header { border-left-color: var(--accent-tool); }
+        .message.system .message-header { border-left-color: var(--accent-system); }
+
+        .message-header:hover {
+            background: var(--bg-card);
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .message-direction {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .message.request .message-direction {
+            background: var(--accent-request);
+            color: white;
+        }
+
+        .message.response .message-direction {
+            background: var(--accent-response);
+            color: black;
+        }
+
+        .message.tool .message-direction {
+            background: var(--accent-tool);
+            color: black;
+        }
+
+        .message.system .message-direction {
+            background: var(--accent-system);
+            color: black;
+        }
+
+        .message-summary {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .message-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .message-duration {
+            color: var(--accent-tool);
+        }
+
+        .message-content {
+            display: none;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+            max-height: 500px;
+            overflow: auto;
+        }
+
+        .message.expanded .message-content {
+            display: block;
+        }
+
+        .message-content pre {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s;
+        }
+
+        .message.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+
+        .stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Syntax highlighting for JSON */
+        .json-key { color: var(--accent-response); }
+        .json-string { color: var(--accent-tool); }
+        .json-number { color: var(--accent-request); }
+        .json-boolean { color: var(--accent-system); }
+        .json-null { color: var(--text-secondary); }
+
+        /* Context chunks styling */
+        .context-chunks {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .context-chunk {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .context-chunk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .context-file-info {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .context-file-path {
+            color: var(--accent-response);
+            font-weight: 600;
+        }
+
+        .context-lines {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .context-language {
+            background: var(--bg-card);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            color: var(--accent-tool);
+        }
+
+        .context-similarity {
+            background: var(--accent-system);
+            color: black;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .context-code {
+            background: var(--bg-primary);
+            padding: 0.5rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            white-space: pre;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔍 agent-t Traffic Inspector</h1>
+        <div class="status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Disconnected</span>
+        </div>
+    </header>
+
+    <div class="controls">
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn active" data-filter="request">Request</button>
+            <button class="filter-btn active" data-filter="response">Response</button>
+            <button class="filter-btn active" data-filter="tool">Tool</button>
+            <button class="filter-btn active" data-filter="system">System</button>
+        </div>
+        <button id="clearBtn">Clear</button>
+        <button id="scrollBtn">Auto-scroll: ON</button>
+        <div class="stats">
+            <span>Messages: <span class="stat-value" id="msgCount">0</span></span>
+            <span>Requests: <span class="stat-value" id="reqCount">0</span></span>
+            <span>Responses: <span class="stat-value" id="resCount">0</span></span>
+            <span>Tools: <span class="stat-value" id="toolCount">0</span></span>
+        </div>
+    </div>
+
+    <main id="messages">
+        <div class="empty-state">
+            <p>Waiting for messages...</p>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">Start chatting with agent-t to see traffic</p>
+        </div>
+    </main>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const msgCount = document.getElementById('msgCount');
+        const reqCount = document.getElementById('reqCount');
+        const resCount = document.getElementById('resCount');
+        const toolCount = document.getElementById('toolCount');
+        const clearBtn = document.getElementById('clearBtn');
+        const scrollBtn = document.getElementById('scrollBtn');
+
+        let messages = [];
+        let autoScroll = true;
+        let activeFilters = new Set(['request', 'response', 'tool', 'system']);
+        let ws = null;
+
+        // Filter button handling
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                if (filter === 'all') {
+                    const allActive = activeFilters.size === 4;
+                    document.querySelectorAll('.filter-btn:not([data-filter="all"])').forEach(b => {
+                        b.classList.toggle('active', !allActive);
+                    });
+                    if (allActive) {
+                        activeFilters.clear();
+                    } else {
+                        activeFilters = new Set(['request', 'response', 'tool', 'system']);
+                    }
+                    btn.classList.toggle('active', !allActive);
+                } else {
+                    btn.classList.toggle('active');
+                    if (activeFilters.has(filter)) {
+                        activeFilters.delete(filter);
+                    } else {
+                        activeFilters.add(filter);
+                    }
+                    // Update "All" button
+                    document.querySelector('.filter-btn[data-filter="all"]').classList.toggle('active', activeFilters.size === 4);
+                }
+                renderMessages();
+            });
+        });
+
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            messages = [];
+            renderMessages();
+            updateStats();
+        });
+
+        // Auto-scroll toggle
+        scrollBtn.addEventListener('click', () => {
+            autoScroll = !autoScroll;
+            scrollBtn.textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
+        });
+
+        function syntaxHighlight(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 2);
+            }
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function formatTimestamp(ts) {
+            const date = new Date(ts);
+            return date.toLocaleTimeString('en-US', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            });
+        }
+
+        function renderContextChunks(chunks) {
+            if (!chunks || chunks.length === 0) {
+                return '<p>No context chunks found</p>';
+            }
+
+            return `
+                <div class="context-chunks">
+                    ${chunks.map((chunk, idx) => `
+                        <div class="context-chunk">
+                            <div class="context-chunk-header">
+                                <div class="context-file-info">
+                                    <span class="context-file-path">${escapeHtml(chunk.file_path)}</span>
+                                    <span class="context-lines">Lines ${chunk.start_line}-${chunk.end_line}</span>
+                                    <span class="context-language">${chunk.language}</span>
+                                </div>
+                                <span class="context-similarity">Similarity: ${(chunk.similarity_score * 100).toFixed(1)}%</span>
+                            </div>
+                            <div class="context-code">${escapeHtml(chunk.content)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function createMessageElement(msg) {
+            const div = document.createElement('div');
+            div.className = `message ${msg.direction}`;
+            div.dataset.id = msg.id;
+
+            const durationHtml = msg.duration_ms
+                ? `<span class="message-duration">${msg.duration_ms}ms</span>`
+                : '';
+
+            // Special rendering for vecdb_search messages
+            let contentHtml;
+            if (msg.message_type === 'vecdb_search' && msg.content.chunks) {
+                contentHtml = renderContextChunks(msg.content.chunks);
+            } else {
+                contentHtml = `<pre>${syntaxHighlight(msg.content)}</pre>`;
+            }
+
+            div.innerHTML = `
+                <div class="message-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <div class="message-meta">
+                        <span class="message-direction">${msg.direction}</span>
+                        <span class="message-summary">${escapeHtml(msg.summary)}</span>
+                    </div>
+                    <div class="message-info">
+                        ${durationHtml}
+                        <span>${formatTimestamp(msg.timestamp)}</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                </div>
+                <div class="message-content">
+                    ${contentHtml}
+                </div>
+            `;
+
+            return div;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderMessages() {
+            const filtered = messages.filter(m => activeFilters.has(m.direction));
+
+            if (filtered.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <p>No messages to display</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+                            ${messages.length > 0 ? 'Try adjusting filters' : 'Start chatting with agent-t to see traffic'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            messagesContainer.innerHTML = '';
+            filtered.forEach(msg => {
+                messagesContainer.appendChild(createMessageElement(msg));
+            });
+
+            if (autoScroll) {
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        }
+
+        function updateStats() {
+            msgCount.textContent = messages.length;
+            reqCount.textContent = messages.filter(m => m.direction === 'request').length;
+            resCount.textContent = messages.filter(m => m.direction === 'response').length;
+            toolCount.textContent = messages.filter(m => m.direction === 'tool').length;
+        }
+
+        function addMessage(msg) {
+            messages.push(msg);
+            updateStats();
+
+            if (activeFilters.has(msg.direction)) {
+                // Remove empty state if present
+                const emptyState = messagesContainer.querySelector('.empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                messagesContainer.appendChild(createMessageElement(msg));
+
+                if (autoScroll) {
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+            }
+        }
+
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+            };
+
+            ws.onclose = () => {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Disconnected - Reconnecting...';
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = () => {
+                ws.close();
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    addMessage(msg);
+                } catch (e) {
+                    console.error('Failed to parse message:', e);
+                }
+            };
+        }
+
+        // Start connection
+        connect();
+    </script>
+</body>
+</html>

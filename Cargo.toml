@@ -1,0 +1,98 @@
+[package]
+name = "agent-t"
+version = "0.1.0"
+edition = "2024"
+authors = ["Sojan James"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+anyhow = "1.0.100"
+rig-core = "0.24.0"
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "process", "fs", "sync", "signal"] }
+tokio-stream = "0.1.17"
+tokio-util = "0.7"
+tracing-subscriber = "0.3.20"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# File operations
+glob = "0.3"
+
+# Web operations (using 0.12 to match rig-core dependency)
+reqwest = { version = "0.12", features = ["json"] }
+html2text = "0.12"
+url = "2.5"
+
+# Error handling
+thiserror = "2.0"
+
+# Async utilities
+async-trait = "0.1"
+
+# CLI parsing
+clap = { version = "4.5", features = ["derive"] }
+
+# Web server for traffic inspector
+axum = { version = "0.8", features = ["ws"] }
+tower-http = { version = "0.6", features = ["fs", "cors"] }
+futures = "0.3"
+
+# Time/date handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Terminal colors
+colored = "3.0"
+
+# Progress indicators
+indicatif = "0.17"
+
+# TUI framework
+ratatui = "0.28"
+crossterm = "0.28"
+tui-textarea = "0.6"
+
+# Directory paths for session storage
+dirs = "6.0"
+
+# UUID for session IDs and process IDs
+uuid = { version = "1.0", features = ["v4"] }
+
+# Global state management
+lazy_static = "1.4"
+
+# System information
+hostname = "0.4"
+
+# LSP support for rust-analyzer
+lsp-types = "0.95"
+lsp-server = "0.7"
+
+# Math calculations
+sci-calc = "1.0"
+
+# Vector database for code context
+ruvector-core = "0.1"
+walkdir = "2.5"
+
+# Local embeddings (no Ollama required)
+fastembed = "5"
+
+# Name validation
+regex = "1.0"
+
+# Tree-sitter for intelligent code parsing
+tree-sitter = "0.24"
+tree-sitter-rust = "0.23"
+tree-sitter-python = "0.23"
+tree-sitter-javascript = "0.23"
+tree-sitter-typescript = "0.23"
+tree-sitter-go = "0.23"
+tree-sitter-java = "0.23"
+tree-sitter-c = "0.23"
+tree-sitter-cpp = "0.23"
+streaming-iterator = "0.1"
+
+# Diff generation
+similar = { version = "2.6", features = ["text"] }
