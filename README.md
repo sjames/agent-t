@@ -2,6 +2,9 @@
 
 A powerful terminal-based coding agent built with Rust that brings AI-assisted development to your command line. Powered by local LLMs via Ollama, it provides intelligent code assistance with tool execution capabilities, similar to Claude Code but running entirely on your machine.
 
+## Help Needed!
+- Help me improve the system prompt and also write some good example agent prompts
+
 ## Features
 
 ### 🛠️ Comprehensive Tool Suite
