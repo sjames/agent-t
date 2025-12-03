@@ -23,6 +23,8 @@ A powerful terminal-based coding agent built with Rust that brings AI-assisted d
   - Refactoring/rename
   - Symbol search
   - Code formatting
+- **Memory Management**: Long-term memory with routine and key memory systems
+- **Sub-agent System**: Spawn independent sub-agents for complex tasks
 
 ### 🎯 Advanced Features
 
@@ -154,6 +156,14 @@ The agent has access to the following tools:
 - `ra_rename` - Refactor/rename symbols
 - `ra_symbols` - Search workspace symbols
 - `ra_format` - Format code using rustfmt
+
+### Memory Management
+- `store_key_memory` - Store important information in long-term memory
+- `search_routine_memory` - Search past conversation history
+- `search_key_memory` - Search curated important memories
+
+### Sub-agent System
+- `spawn_agent` - Spawn independent sub-agents for complex tasks
 
 ### Utilities
 - `math_calc` - Evaluate mathematical expressions
@@ -327,7 +337,12 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ## License
 
-[Add your license here]
+This project is licensed under either of:
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
 
 ## Acknowledgments
 
