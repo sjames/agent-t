@@ -1444,6 +1444,9 @@ impl<M: CompletionModel> AgentLoop<M> {
                             StreamedAssistantContent::Final(_) => {
                                 // Final item contains usage info
                             }
+                            StreamedAssistantContent::ReasoningDelta { id, reasoning } => {
+                                // Ignore reasoning Delta
+                            },
                         },
                         Err(e) => {
                             let error_msg = format!("Stream error: {}", e);
@@ -1509,6 +1512,9 @@ impl<M: CompletionModel> AgentLoop<M> {
                         AssistantContent::Reasoning(_) => {
                             // Reasoning content is internal model reasoning, we can ignore it
                         }
+                        AssistantContent::Image(image) => {
+                            // Ignoring Images
+                        },
                     }
                 }
             }

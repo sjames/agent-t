@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use rig::client::CompletionClient;
+use rig::client::{CompletionClient, Nothing};
+use rig::completion::CompletionModel;
+use rig::providers::anthropic::Client;
 use rig::providers::ollama;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
@@ -566,14 +568,23 @@ async fn main() -> Result<()> {
     // Create Ollama client
     let ollama_client = if let Some(ref url) = args.ollama_url {
         terminal::print_info(&format!("Using Ollama at: {}", url));
-        ollama::Client::builder().base_url(url).build()
+       
+       ollama::Client::builder()
+            .api_key(Nothing)
+            .base_url(&url)
+            .build()
+            .unwrap()
+
     } else {
         // Use default localhost:11434
-        ollama::Client::new()
+        ollama::Client::new(Nothing).unwrap()
     };
 
+    use rig::providers::*;
+
     // Create a completion model
-    let model = ollama_client.completion_model(&args.model);
+    //let completion_model_type = open
+    let model: ollama::CompletionModel<reqwest::Client> = ollama_client.completion_model(&args.model);
 
     // Create channels for TUI <-> Agent communication
     let (tui_tx, tui_rx) = tokio::sync::mpsc::channel::<tui::TuiEvent>(100);

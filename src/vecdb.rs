@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use rig::client::EmbeddingsClient;
+use rig::client::{EmbeddingsClient, Nothing};
 use rig::embeddings::EmbeddingModel as _;
 use rig::providers::ollama;
 use ruvector_core::{VectorDB as RuVectorDB, VectorEntry, SearchQuery, DistanceMetric};
@@ -48,9 +48,9 @@ impl VectorDB {
 
         // Create Ollama client
         let ollama_client = if let Some(url) = ollama_url {
-            ollama::Client::builder().base_url(url).build()
+            ollama::Client::builder().base_url(url).api_key(Nothing).build()?
         } else {
-            ollama::Client::new()
+            ollama::Client::new(Nothing)?
         };
 
         let embedding_model = ollama_client.embedding_model(embedding_model_name);
